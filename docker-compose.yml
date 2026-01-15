@@ -1,0 +1,48 @@
+services:
+  dev-environment:
+    # Build from local Dockerfile
+    build: .
+
+    # Or use pre-built image from registry
+    # image: your-registry/dev-environment:latest
+
+    # Resource limits matching your constraints
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          memory: 512M
+
+    # Expose SSH port (Coolify will map to host port)
+    expose:
+      - "22"
+
+    # Persistent volume for project data
+    # Coolify will auto-generate unique volume name per deployment
+    volumes:
+      - type: volume
+        source: project-data
+        target: /workspace
+
+    # Environment variables
+    # Configure these in Coolify UI for better security
+    environment:
+      # Change default root password (set in Coolify UI)
+      - ROOT_PASSWORD=${ROOT_PASSWORD:-changeme}
+      # Project identifier (optional, for reference)
+      - PROJECT_NAME=${PROJECT_NAME:-my-project}
+
+    # Keep container running
+    restart: unless-stopped
+
+    # Optional: Add labels for organization
+    labels:
+      - "com.coolify.description=Cloud Development Environment"
+      - "com.coolify.type=development"
+
+volumes:
+  project-data:
+    # Coolify will auto-generate: project-data-<uuid>
+    # This ensures each deployment gets unique storage

@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+LICENSE
+*.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Examples (we don't need these in the image)
+examples/
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Misc
+.env
+.env.local
+*.log
