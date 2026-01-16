@@ -15,9 +15,9 @@ services:
         reservations:
           memory: 512M
 
-    # Expose SSH port (Coolify will map to host port)
+    # Expose SSH port on 3000 (matches internal SSH port)
     ports:
-      - "22:22"
+      - "3000:3000"
 
     # Persistent volume for project data
     # Coolify will auto-generate unique volume name per deployment
