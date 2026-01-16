@@ -34,9 +34,12 @@ RUN apk add --no-cache \
 RUN npm install -g @anthropic-ai/claude-code
 
 # Configure SSH server for remote access
+# Use port 3000 to work with Coolify's default port mapping
 RUN ssh-keygen -A && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
-    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#Port 22/Port 3000/' /etc/ssh/sshd_config && \
+    sed -i 's/Port 22/Port 3000/g' /etc/ssh/sshd_config
 
 # Create startup script to set password from environment variable
 RUN echo '#!/bin/sh' > /entrypoint.sh && \
@@ -47,12 +50,12 @@ RUN echo '#!/bin/sh' > /entrypoint.sh && \
     echo '    echo "WARNING: Using default root password"' >> /entrypoint.sh && \
     echo '    echo "root:changeme" | chpasswd' >> /entrypoint.sh && \
     echo 'fi' >> /entrypoint.sh && \
+    echo 'echo "SSH server starting on port 3000..."' >> /entrypoint.sh && \
     echo 'exec /usr/sbin/sshd -D -e' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
-# Expose SSH port
-# Coolify will map this to a host port automatically
-EXPOSE 22
+# Expose SSH port on 3000 (Coolify's default)
+EXPOSE 3000
 
 # Health check to ensure SSH is running
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
