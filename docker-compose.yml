@@ -16,8 +16,8 @@ services:
           memory: 512M
 
     # Expose SSH port (Coolify will map to host port)
-    expose:
-      - "22"
+    ports:
+      - "22:22"
 
     # Persistent volume for project data
     # Coolify will auto-generate unique volume name per deployment
