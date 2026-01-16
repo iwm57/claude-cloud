@@ -38,10 +38,17 @@ RUN ssh-keygen -A && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
-# Set default root password
-# WARNING: Change this immediately after first login!
-# For production, use SSH keys via environment variable or volume mount
-RUN echo 'root:changeme' | chpasswd
+# Create startup script to set password from environment variable
+RUN echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'if [ -n "$ROOT_PASSWORD" ]; then' >> /entrypoint.sh && \
+    echo '    echo "root:$ROOT_PASSWORD" | chpasswd' >> /entrypoint.sh && \
+    echo '    echo "Root password set from environment variable"' >> /entrypoint.sh && \
+    echo 'else' >> /entrypoint.sh && \
+    echo '    echo "WARNING: Using default root password"' >> /entrypoint.sh && \
+    echo '    echo "root:changeme" | chpasswd' >> /entrypoint.sh && \
+    echo 'fi' >> /entrypoint.sh && \
+    echo 'exec /usr/sbin/sshd -D -e' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
 
 # Expose SSH port
 # Coolify will map this to a host port automatically
@@ -51,6 +58,5 @@ EXPOSE 22
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD pgrep sshd || exit 1
 
-# Start SSH server in foreground
-# -e: Log to stderr (Docker can capture logs)
-CMD ["/usr/sbin/sshd", "-D", "-e"]
+# Start SSH server in foreground via entrypoint script
+CMD ["/entrypoint.sh"]
