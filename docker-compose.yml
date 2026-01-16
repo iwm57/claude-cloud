@@ -18,7 +18,10 @@ services:
     # Map SSH to a high port that bypasses Traefik HTTP proxy
     # Port 22222 on host → Port 3000 inside container
     ports:
-      - "22222:3000"
+      - target: 3000
+        published: 22222
+        protocol: tcp
+        mode: host
 
     # Persistent volume for project data
     # Coolify will auto-generate unique volume name per deployment
@@ -38,10 +41,12 @@ services:
     # Keep container running
     restart: unless-stopped
 
-    # Optional: Add labels for organization
+    # Labels to configure Traefik and Coolify behavior
     labels:
       - "com.coolify.description=Cloud Development Environment"
       - "com.coolify.type=development"
+      # Disable Traefik for this service (SSH doesn't need HTTP proxy)
+      - "traefik.enable=false"
 
 volumes:
   project-data:
