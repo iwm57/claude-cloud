@@ -15,9 +15,10 @@ services:
         reservations:
           memory: 512M
 
-    # Expose SSH port on 3000 (matches internal SSH port)
+    # Map SSH to a high port that bypasses Traefik HTTP proxy
+    # Port 22222 on host → Port 3000 inside container
     ports:
-      - "3000:3000"
+      - "22222:3000"
 
     # Persistent volume for project data
     # Coolify will auto-generate unique volume name per deployment
