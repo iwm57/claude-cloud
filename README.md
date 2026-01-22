@@ -3,13 +3,12 @@
 A lightweight, containerized development environment optimized for Coolify deployment. Run Claude CLI with Node.js and Python development tools in an isolated workspace.
 
 **Features:**
-- **Lightweight:** Alpine Linux base (~234 MB total, ~2.7 GB free for projects)
+- **Lightweight:** Alpine Linux base (~150 MB without SSH)
 - **Resource-constrained:** 1GB RAM, 3GB disk space per container
 - **Pre-installed:** Claude CLI, Node.js, Python, Git, vim, nano
-- **SSH access:** Secure remote terminal access
 - **Self-healing:** Automatic setup of tools and scripts on container start
 - **Persistent storage:** Claude session data and context preserved across redeployments
-- **One container per project:** Easy cleanup when done
+- **Access via:** Coolify web terminal or docker exec
 
 **Resource Limits:**
 - CPU: 1 core
@@ -22,23 +21,22 @@ A lightweight, containerized development environment optimized for Coolify deplo
 
 ### 1. Deploy to Coolify
 
-#### Option A: From Git Repository
+#### From Git Repository
 
-1. Push this repository to GitHub/GitLab
-2. In Coolify, create a new resource
-3. Select **Docker Compose** build pack
-4. Connect your repository
-5. Deploy!
+1. In Coolify, create a new resource
+2. Select **Dockerfile** build pack
+3. Connect your `iwm57/claude-cloud` repository
+4. Deploy!
 
-#### Option B: From Local Dockerfile
+#### From Local Dockerfile
 
 ```bash
 # Build the image
-docker build -t dev-environment:latest .
+docker build -t claude-cloud:latest .
 
 # Optional: Tag and push to registry
-docker tag dev-environment:latest your-registry/dev-environment:latest
-docker push your-registry/dev-environment:latest
+docker tag claude-cloud:latest your-registry/claude-cloud:latest
+docker push your-registry/claude-cloud:latest
 ```
 
 ### 2. Configure Environment Variables
@@ -47,7 +45,6 @@ In Coolify UI, set these environment variables:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ROOT_PASSWORD` | Yes | SSH password for root user |
 | `GITHUB_TOKEN` | No | Personal access token for gh CLI authentication |
 | `SERPER_API_KEY` | No | API key for kindly-web-search MCP server |
 
@@ -62,20 +59,12 @@ For persistence across redeployments, add these volume mounts in Coolify:
 
 **Note:** The container automatically creates `/workspace/context/scripts/startup/` for your custom scripts.
 
-### 4. Connect via SSH
+### 4. Access the Container
 
-After deployment:
+After deployment, access via Coolify web terminal or:
 
-1. Find the assigned SSH port in Coolify dashboard
-2. Connect using:
-   ```bash
-   ssh -p <assigned-port> root@<your-coolify-server-ip>
-   ```
-3. Enter your password (from `ROOT_PASSWORD` env var)
-
-**Example:**
 ```bash
-ssh -p 30001 root@coolify.example.com
+docker exec -it <container-name> bash
 ```
 
 ---
@@ -115,13 +104,6 @@ chmod +x /workspace/context/scripts/startup/chromium-cleanup.sh
 ### Starting a New Project
 
 ```bash
-# Deploy new container via Coolify (one per project)
-# Each container gets unique volume and port
-```
-
-### Inside the Container
-
-```bash
 # You're in /workspace - your project directory
 cd /workspace
 
@@ -135,27 +117,18 @@ python -m venv venv  # Python virtual environment
 
 # Use Claude CLI (already installed)
 claude "Help me set up a Node.js project"
+```
 
+### Inside the Container
+
+```bash
 # Install dependencies
 npm install          # Node.js
 pip install -r requirements.txt  # Python
-```
-
-### Testing and Development
-
-```bash
-# Node.js project
-node index.js
-npm test
-npm run build
-
-# Python project
-python main.py
-pip install pytest
-pytest
 
 # Use Claude for assistance
 claude "Debug this error"
+claude "Refactor this function"
 ```
 
 ### Cleaning Up
@@ -165,7 +138,7 @@ When your project is complete:
 1. Go to **Coolify Dashboard** → **Resources**
 2. Find your project container
 3. Click **Delete** → **Confirm**
-4. Container and all data are permanently removed
+4. Container and all data are permanently removed (volume mounts persist unless deleted)
 
 ---
 
@@ -173,20 +146,20 @@ When your project is complete:
 
 **Pre-installed in every container:**
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Node.js | (Alpine current) | JavaScript runtime |
-| npm | (Alpine current) | Node.js package manager |
-| Python | 3.x | Python runtime |
-| pip | (Alpine current) | Python package manager |
-| uv | (auto-installed) | Fast Python package installer |
-| Git | (Alpine current) | Version control |
-| gh CLI | (auto-installed) | GitHub CLI (if GITHUB_TOKEN set) |
-| Claude CLI | Latest | AI coding assistant |
-| vim | (Alpine current) | Text editor |
-| nano | (Alpine current) | Simple text editor |
-| curl | (Alpine current) | HTTP client |
-| bash | (Alpine current) | Shell |
+| Tool | Purpose |
+|------|---------|
+| Node.js | JavaScript runtime |
+| npm | Node.js package manager |
+| Python 3.x | Python runtime |
+| pip | Python package manager |
+| uv | Fast Python package installer (auto-installed) |
+| Git | Version control |
+| gh CLI | GitHub CLI (auto-installed if GITHUB_TOKEN set) |
+| Claude CLI | AI coding assistant |
+| vim | Text editor |
+| nano | Simple text editor |
+| curl | HTTP client |
+| bash | Shell |
 
 **Check versions:**
 ```bash
@@ -229,51 +202,81 @@ npm cache clean --force   # Node.js
 pip cache purge           # Python
 ```
 
-### Automatic Cleanup (Optional)
+---
 
-Enable in Coolify:
-1. Go to **Server** → **Configuration** → **Advanced**
-2. Set **Docker Cleanup Threshold** (e.g., 80%)
-3. Set **Docker Cleanup Frequency** (cron expression)
+## Troubleshooting
+
+### Container Won't Start
+
+```bash
+# Check logs in Coolify dashboard
+# Or via CLI:
+docker logs <container-id>
+```
+
+### Can't Access Container
+
+1. Verify container is running: `docker ps`
+2. Use Coolify web terminal for direct access
+3. Or use: `docker exec -it <container-id> bash`
+
+### Out of Space
+
+```bash
+# Check disk usage
+df -h
+du -sh /workspace/*
+
+# Clean caches
+npm cache clean --force
+pip cache purge
+rm -rf ~/.cache
+```
+
+### Claude CLI Not Working
+
+```bash
+# Check installation
+which claude
+npm list -g @anthropic-ai/claude-code
+
+# Reinstall if needed
+npm install -g @anthropic-ai/claude-code
+```
 
 ---
 
-## Security Best Practices
+## Architecture
 
-### Initial Setup
+**Container Structure:**
 
-1. **Change the default password:**
-   - Set `ROOT_PASSWORD` environment variable in Coolify UI
-   - Never use the default `changeme` password
-
-2. **Use SSH keys (recommended):**
-   ```bash
-   # Generate SSH key pair
-   ssh-keygen -t ed25519 -C "your-email@example.com"
-
-   # Add public key to container
-   # In Coolify, add SSH_PUBLIC_KEY environment variable:
-   # ssh-rsa AAAAB3... your-email@example.com
-   ```
-
-3. **Restrict access by IP:**
-   - Configure firewall rules in Coolify
-   - Only allow SSH from your IP address
-
-### SSH Keys Setup (Advanced)
-
-Modify `Dockerfile` to support SSH keys:
-
-```dockerfile
-# Replace password authentication section with:
-RUN mkdir -p /root/.ssh && \
-    chmod 700 /root/.ssh && \
-    echo "${SSH_PUBLIC_KEY}" >> /root/.ssh/authorized_keys && \
-    chmod 600 /root/.ssh/authorized_keys && \
-    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+```
+claude-cloud container
+├── /workspace              ← Working directory (ephemeral)
+│   └── /context           ← Persistent volume mount
+│       └── scripts/
+│           └── startup/   ← Your startup scripts
+├── /root/.claude          ← Persistent volume mount
+│   ├── history.jsonl      ← Conversation history
+│   ├── session-env/       ← Session environments
+│   └── settings.json      ← Your settings
+└── entrypoint.sh          ← Self-healing setup script
 ```
 
-Then set `SSH_PUBLIC_KEY` environment variable in Coolify.
+Each container is:
+- **Isolated:** Separate filesystem, processes, network
+- **Ephemeral:** Easy to delete and recreate (with volume persistence)
+- **Resource-constrained:** Won't affect other projects
+
+---
+
+## Examples
+
+See the `examples/` directory for sample project setups:
+
+- `examples/nodejs-project/` - Simple Express.js API
+- `examples/python-project/` - Flask web application
+- `examples/startup-scripts/` - Startup scripts for automatic execution
 
 ---
 
@@ -300,99 +303,7 @@ Then set `SSH_PUBLIC_KEY` environment variable in Coolify.
 
 ### If You Need Native Modules
 
-Uncomment in Dockerfile:
-```dockerfile
-# Add to apk add line:
-build-base \
-python3-dev \
-```
-
-This adds ~80 MB but enables compiling native npm/pip packages.
-
----
-
-## Troubleshooting
-
-### Container Won't Start
-
-```bash
-# Check logs in Coolify dashboard
-# Or via CLI:
-docker logs <container-id>
-```
-
-### Can't Connect via SSH
-
-1. Verify container is running: `docker ps`
-2. Check SSH port mapping in Coolify
-3. Ensure firewall allows the port
-4. Try with verbose mode: `ssh -vvv -p <port> root@<host>`
-
-### Out of Space
-
-```bash
-# Check disk usage
-df -h
-du -sh /workspace/*
-
-# Clean caches
-npm cache clean --force
-pip cache purge
-
-# If desperate, remove node_modules and reinstall
-rm -rf node_modules
-npm install
-```
-
-### Claude CLI Not Working
-
-```bash
-# Check installation
-which claude
-npm list -g @anthropic-ai/claude-code
-
-# Reinstall if needed
-npm install -g @anthropic-ai/claude-code
-```
-
----
-
-## Architecture
-
-**One Container Per Project:**
-
-```
-Coolify Server
-├── project-alpha (1GB RAM, 3GB disk)
-│   ├── SSH Port: 30001
-│   ├── Volume: project-data-abc123
-│   └── Workspace: /workspace
-│
-├── project-beta (1GB RAM, 3GB disk)
-│   ├── SSH Port: 30002
-│   ├── Volume: project-data-def456
-│   └── Workspace: /workspace
-│
-└── project-gamma (1GB RAM, 3GB disk)
-    ├── SSH Port: 30003
-    ├── Volume: project-data-ghi789
-    └── Workspace: /workspace
-```
-
-Each container is:
-- **Isolated:** Separate filesystem, processes, network
-- **Ephemeral:** Easy to delete and recreate
-- **Resource-constrained:** Won't affect other projects
-
----
-
-## Examples
-
-See the `examples/` directory for sample project setups:
-
-- `examples/nodejs-project/` - Simple Express.js API
-- `examples/python-project/` - Flask web application
-- `examples/startup-scripts/` - Startup scripts for automatic execution
+The `build-base` package is included for compiling native npm/pip packages. If you don't need it, remove it from the Dockerfile to save ~80 MB.
 
 ---
 

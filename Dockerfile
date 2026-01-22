@@ -1,62 +1,40 @@
 # Lightweight base for cloud development environment
-# Optimized for Coolify deployment with resource constraints:
-# - Max 1GB RAM
-# - Max 3GB disk space
+# Optimized for Coolify deployment with resource constraints
 FROM alpine:3.19
 
 # Set working directory for projects
 WORKDIR /workspace
 
-# Install all dependencies in a single layer to minimize size
-# Total estimated size: ~226 MB
+# Install dependencies
 RUN apk add --no-cache \
-    # Version control (~15 MB)
     git \
-    # HTTP client (~2 MB)
     curl \
-    # Text editors (~11 MB total)
     vim \
     nano \
-    # Better shell (~5 MB) - Alpine defaults to ash
     bash \
-    # SSH server and client (~8 MB)
-    openssh \
-    # Node.js runtime and package manager (~45 MB)
+    # Node.js runtime and package manager
     nodejs \
     npm \
-    # Python runtime and package manager (~60 MB)
+    # Python runtime and package manager
     python3 \
     py3-pip \
     # For building packages
     build-base \
-    # Clean up package cache
     && rm -rf /var/cache/apk/*
 
-# Install Claude CLI globally (~83 MB)
+# Install Claude CLI globally
 RUN npm install -g @anthropic-ai/claude-code
-
-# Configure SSH server for remote access
-# Use port 3000 to work with Coolify's default port mapping
-RUN ssh-keygen -A && \
-    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
-    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    sed -i 's/#Port 22/Port 3000/' /etc/ssh/sshd_config && \
-    sed -i 's/Port 22/Port 3000/g' /etc/ssh/sshd_config
 
 # Copy self-healing entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Declare volumes for persistent storage
-# VOLUME instruction is for documentation - actual mounts configured in Coolify
 VOLUME ["/root/.claude", "/workspace/context"]
 
-# Expose SSH port on 3000 (Coolify's default)
-EXPOSE 3000
-
-# Health check to ensure SSH is running
+# Health check - container is healthy if Claude CLI is available
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD pgrep sshd || exit 1
+    CMD command -v claude || exit 1
 
-# Start self-healing entrypoint script
+# Run entrypoint (keeps container alive)
 CMD ["/entrypoint.sh"]
