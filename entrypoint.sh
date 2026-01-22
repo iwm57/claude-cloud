@@ -51,28 +51,20 @@ if [ -n "$SERPER_API_KEY" ]; then
     # Wait for Claude CLI to be available
     for i in $(seq 1 30); do
         if command -v claude >/dev/null 2>&1; then
-            # Check if MCP already configured
-            if ! claude mcp list 2>/dev/null | grep -q "kindly-web-search"; then
-                echo "==> Installing kindly-web-search MCP..."
-                cd /root
-                claude mcp add kindly-web-search \
-                    --transport stdio \
-                    --env SERPER_API_KEY="$SERPER_API_KEY" \
-                    -- \
-                    uvx --from git+https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server \
-                    kindly-web-search-mcp-server start-mcp-server && \
-                echo "==> kindly-web-search MCP installed" || echo "==> MCP install skipped (may already exist)"
-            fi
+            echo "==> Installing kindly-web-search MCP in /workspace..."
+            cd /workspace
+            claude mcp add kindly-web-search \
+                --transport stdio \
+                --env SERPER_API_KEY="$SERPER_API_KEY" \
+                -- \
+                uvx --from git+https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server \
+                kindly-web-search-mcp-server start-mcp-server && \
+            echo "==> kindly-web-search MCP installed" || \
+            echo "==> MCP install may have failed"
             break
         fi
         sleep 1
     done
-fi
-
-# 5.5. Symlink .claude.json to workspace so MCP works everywhere
-if [ -f /root/.claude.json ] && [ ! -L /workspace/.claude.json ] && [ ! -e /workspace/.claude.json ]; then
-    ln -s /root/.claude.json /workspace/.claude.json
-    echo "==> Symlinked .claude.json to /workspace"
 fi
 
 # 6. Run startup scripts from persistent storage
