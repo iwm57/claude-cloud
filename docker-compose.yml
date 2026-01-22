@@ -1,54 +1,53 @@
+# Claude Cloud - Self-healing development environment
+# Usage: docker compose up -d
 services:
-  dev-environment:
-    # Build from local Dockerfile
-    build: .
+  claude-cloud:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: claude-cloud:latest
+    container_name: claude-cloud
 
-    # Or use pre-built image from registry
-    # image: your-registry/dev-environment:latest
+    # Keep container running
+    restart: unless-stopped
 
-    # Resource limits matching your constraints
+    # Persistent volumes
+    volumes:
+      - claude-data:/root/.claude
+      - workspace-context:/workspace/context
+
+    # Environment variables (use .env file for sensitive values)
+    environment:
+      # GitHub token for gh CLI authentication
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      # API key for kindly-web-search MCP server
+      - SERPER_API_KEY=${SERPER_API_KEY:-}
+
+    # Resource limits
     deploy:
       resources:
         limits:
           cpus: '1.0'
           memory: 1G
         reservations:
-          memory: 512M
+          memory: 256M
 
-    # Map SSH to a high port that bypasses Traefik HTTP proxy
-    # Port 22222 on host → Port 3000 inside container
-    ports:
-      - target: 3000
-        published: 22222
-        protocol: tcp
-        mode: host
+    # Health check
+    healthcheck:
+      test: ["CMD", "sh", "-c", "command -v claude"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
 
-    # Persistent volume for project data
-    # Coolify will auto-generate unique volume name per deployment
-    volumes:
-      - type: volume
-        source: project-data
-        target: /workspace
-
-    # Environment variables
-    # Configure these in Coolify UI for better security
-    environment:
-      # Change default root password (set in Coolify UI)
-      - ROOT_PASSWORD=${ROOT_PASSWORD:-changeme}
-      # Project identifier (optional, for reference)
-      - PROJECT_NAME=${PROJECT_NAME:-my-project}
-
-    # Keep container running
-    restart: unless-stopped
-
-    # Labels to configure Traefik and Coolify behavior
+    # Labels for Coolify
     labels:
-      - "com.coolify.description=Cloud Development Environment"
+      - "com.coolify.description=Claude Cloud Development Environment"
       - "com.coolify.type=development"
-      # Disable Traefik for this service (SSH doesn't need HTTP proxy)
-      - "traefik.enable=false"
 
+# Named volumes (auto-created by Docker)
 volumes:
-  project-data:
-    # Coolify will auto-generate: project-data-<uuid>
-    # This ensures each deployment gets unique storage
+  claude-data:
+    driver: local
+  workspace-context:
+    driver: local

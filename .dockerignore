@@ -35,4 +35,7 @@ examples/
 # Misc
 .env
 .env.local
+.env.*.local
 *.log
+# Keep example env file
+!.env.example
