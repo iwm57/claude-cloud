@@ -12,6 +12,7 @@ RUN apk add --no-cache \
     vim \
     nano \
     bash \
+    jq \
     # Node.js runtime and package manager
     nodejs \
     npm \

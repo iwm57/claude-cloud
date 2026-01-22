@@ -30,8 +30,20 @@ fi
 if [ -n "$Z_AI_API_KEY" ] && command -v coding-helper >/dev/null 2>&1; then
     echo "==> Configuring z.ai coding-helper..."
     coding-helper auth glm_coding_plan_global "$Z_AI_API_KEY" && \
+    coding-helper auth reload claude && \
     echo "==> z.ai coding-helper configured" || \
     echo "==> z.ai coding-helper configuration skipped"
+
+    # Also configure Claude settings.json for z.ai endpoint
+    echo "==> Updating Claude settings for z.ai..."
+    SETTINGS_FILE="/root/.claude/settings.json"
+    if [ -f "$SETTINGS_FILE" ]; then
+        # Add/update z.ai configuration in settings.json
+        tmpfile=$(mktemp)
+        jq --arg token "$Z_AI_API_KEY" '.env.ANTHROPIC_AUTH_TOKEN = $token | .env.ANTHROPIC_BASE_URL = "https://api.z.ai/api/anthropic" | .env.API_TIMEOUT_MS = "3000000"' "$SETTINGS_FILE" > "$tmpfile" 2>/dev/null || cp "$SETTINGS_FILE" "$tmpfile"
+        mv "$tmpfile" "$SETTINGS_FILE"
+        echo "==> Claude settings updated for z.ai"
+    fi
 fi
 
 # 5. Install kindly-web-search MCP if SERPER_API_KEY is provided
