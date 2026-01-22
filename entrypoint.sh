@@ -51,10 +51,10 @@ if [ -n "$SERPER_API_KEY" ]; then
     # Wait for Claude CLI to be available
     for i in $(seq 1 30); do
         if command -v claude >/dev/null 2>&1; then
-            # Check if MCP already configured (check /root config)
+            # Check if MCP already configured (check /workspace config)
             if ! claude mcp list 2>/dev/null | grep -q "kindly-web-search"; then
                 echo "==> Installing kindly-web-search MCP..."
-                cd /root
+                cd /workspace
                 claude mcp add kindly-web-search \
                     --transport stdio \
                     --env SERPER_API_KEY="$SERPER_API_KEY" \
@@ -62,7 +62,6 @@ if [ -n "$SERPER_API_KEY" ]; then
                     uvx --from git+https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server \
                     kindly-web-search-mcp-server start-mcp-server && \
                 echo "==> kindly-web-search MCP installed" || echo "==> MCP install skipped (may already exist)"
-                cd - > /dev/null
             fi
             break
         fi
