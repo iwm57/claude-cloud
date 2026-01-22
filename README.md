@@ -7,6 +7,8 @@ A lightweight, containerized development environment optimized for Coolify deplo
 - **Resource-constrained:** 1GB RAM, 3GB disk space per container
 - **Pre-installed:** Claude CLI, Node.js, Python, Git, vim, nano
 - **SSH access:** Secure remote terminal access
+- **Self-healing:** Automatic setup of tools and scripts on container start
+- **Persistent storage:** Claude session data and context preserved across redeployments
 - **One container per project:** Easy cleanup when done
 
 **Resource Limits:**
@@ -41,12 +43,26 @@ docker push your-registry/dev-environment:latest
 
 ### 2. Configure Environment Variables
 
-In Coolify UI, set these environment variables for better security:
+In Coolify UI, set these environment variables:
 
-- `ROOT_PASSWORD`: Your secure SSH password (required)
-- `PROJECT_NAME`: Optional identifier for your project
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ROOT_PASSWORD` | Yes | SSH password for root user |
+| `GITHUB_TOKEN` | No | Personal access token for gh CLI authentication |
+| `SERPER_API_KEY` | No | API key for kindly-web-search MCP server |
 
-### 3. Connect via SSH
+### 3. Configure Volume Mounts
+
+For persistence across redeployments, add these volume mounts in Coolify:
+
+| Volume Path | Purpose |
+|-------------|---------|
+| `/root/.claude` | Claude CLI session data, history, settings |
+| `/workspace/context` | Your project context, notes, and scripts |
+
+**Note:** The container automatically creates `/workspace/context/scripts/startup/` for your custom scripts.
+
+### 4. Connect via SSH
 
 After deployment:
 
@@ -61,6 +77,36 @@ After deployment:
 ```bash
 ssh -p 30001 root@coolify.example.com
 ```
+
+---
+
+## Self-Healing Features
+
+The container automatically sets up tools and runs your custom scripts on every start:
+
+### Automatic Setup
+
+1. **gh CLI** - Installed and authenticated if `GITHUB_TOKEN` is provided
+2. **uv** - Python package installer, always available
+3. **kindly-web-search MCP** - Auto-configured if `SERPER_API_KEY` is provided
+4. **Startup scripts** - Any `.sh` files in `/workspace/context/scripts/startup/` are executed automatically
+
+### Using Startup Scripts
+
+Place executable scripts in `/workspace/context/scripts/startup/`:
+
+```bash
+# Example: Install chromium cleanup on container start
+cat > /workspace/context/scripts/startup/chromium-cleanup.sh << 'EOF'
+#!/bin/sh
+# This script runs automatically on container start
+# See examples/startup-scripts/chromium-cleanup.sh for reference
+EOF
+chmod +x /workspace/context/scripts/startup/chromium-cleanup.sh
+```
+
+**Example scripts are provided in `examples/startup-scripts/`:**
+- `chromium-cleanup.sh` - Auto-kill orphaned Chromium processes
 
 ---
 
@@ -133,7 +179,9 @@ When your project is complete:
 | npm | (Alpine current) | Node.js package manager |
 | Python | 3.x | Python runtime |
 | pip | (Alpine current) | Python package manager |
+| uv | (auto-installed) | Fast Python package installer |
 | Git | (Alpine current) | Version control |
+| gh CLI | (auto-installed) | GitHub CLI (if GITHUB_TOKEN set) |
 | Claude CLI | Latest | AI coding assistant |
 | vim | (Alpine current) | Text editor |
 | nano | (Alpine current) | Simple text editor |
@@ -154,13 +202,18 @@ claude --version
 
 ## Storage and Persistence
 
-### Volume Mounts
+### Volume Mounts (Recommended)
 
-Each container gets a unique persistent volume at `/workspace`:
+For data to survive redeployments, configure these volume mounts in Coolify:
 
-- Data survives container restarts
-- Data persists until you delete the resource in Coolify
-- Each project container has isolated storage
+| Mount Path | Purpose |
+|------------|---------|
+| `/root/.claude` | Claude session data, history, settings |
+| `/workspace/context` | Your persistent context, notes, scripts |
+
+**Without volume mounts:** All data is lost when container redeploys.
+
+**With volume mounts:** Only data in mounted paths persists. `/workspace` (except `/workspace/context`) is ephemeral.
 
 ### Disk Usage
 
@@ -339,6 +392,7 @@ See the `examples/` directory for sample project setups:
 
 - `examples/nodejs-project/` - Simple Express.js API
 - `examples/python-project/` - Flask web application
+- `examples/startup-scripts/` - Startup scripts for automatic execution
 
 ---
 

@@ -27,7 +27,9 @@ RUN apk add --no-cache \
     # Python runtime and package manager (~60 MB)
     python3 \
     py3-pip \
-    # Clean up package cache (redundant with --no-cache but safe)
+    # For building packages
+    build-base \
+    # Clean up package cache
     && rm -rf /var/cache/apk/*
 
 # Install Claude CLI globally (~83 MB)
@@ -41,18 +43,13 @@ RUN ssh-keygen -A && \
     sed -i 's/#Port 22/Port 3000/' /etc/ssh/sshd_config && \
     sed -i 's/Port 22/Port 3000/g' /etc/ssh/sshd_config
 
-# Create startup script to set password from environment variable
-RUN echo '#!/bin/sh' > /entrypoint.sh && \
-    echo 'if [ -n "$ROOT_PASSWORD" ]; then' >> /entrypoint.sh && \
-    echo '    echo "root:$ROOT_PASSWORD" | chpasswd' >> /entrypoint.sh && \
-    echo '    echo "Root password set from environment variable"' >> /entrypoint.sh && \
-    echo 'else' >> /entrypoint.sh && \
-    echo '    echo "WARNING: Using default root password"' >> /entrypoint.sh && \
-    echo '    echo "root:changeme" | chpasswd' >> /entrypoint.sh && \
-    echo 'fi' >> /entrypoint.sh && \
-    echo 'echo "SSH server starting on port 3000..."' >> /entrypoint.sh && \
-    echo 'exec /usr/sbin/sshd -D -e' >> /entrypoint.sh && \
-    chmod +x /entrypoint.sh
+# Copy self-healing entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Declare volumes for persistent storage
+# VOLUME instruction is for documentation - actual mounts configured in Coolify
+VOLUME ["/root/.claude", "/workspace/context"]
 
 # Expose SSH port on 3000 (Coolify's default)
 EXPOSE 3000
@@ -61,5 +58,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD pgrep sshd || exit 1
 
-# Start SSH server in foreground via entrypoint script
+# Start self-healing entrypoint script
 CMD ["/entrypoint.sh"]
