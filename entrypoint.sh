@@ -12,7 +12,18 @@ echo "==> Persistent directories ready"
 # 2. Install gh CLI if GITHUB_TOKEN is provided
 if [ -n "$GITHUB_TOKEN" ] && ! command -v gh >/dev/null 2>&1; then
     echo "==> Installing gh CLI..."
-    apk add --no-cache gh
+    apk add --no-cache curl
+    # Download latest gh CLI binary for Alpine
+    arch=$(uname -m)
+    case $arch in
+        x86_64) gh_arch="amd64" ;;
+        aarch64) gh_arch="arm64" ;;
+        *) echo "Unsupported architecture: $arch"; exit 1 ;;
+    esac
+    curl -LsSf "https://github.com/cli/cli/releases/latest/download/gh_${gh_arch}_unknown_linux_musl.tar.gz" -o /tmp/gh.tar.gz
+    tar -xzf /tmp/gh.tar.gz -C /tmp
+    mv /tmp/gh_/bin/gh /usr/local/bin/
+    rm -rf /tmp/gh.tar.gz /tmp/gh_
     echo "$GITHUB_TOKEN" | gh auth login --with-token
     echo "==> gh CLI installed and authenticated"
 fi
