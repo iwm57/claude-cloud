@@ -25,6 +25,9 @@ RUN apk add --no-cache \
 # Install Claude CLI globally
 RUN npm install -g @anthropic-ai/claude-code
 
+# Install z.ai coding helper
+RUN npm install -g @z_ai/coding-helper
+
 # Copy self-healing entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

@@ -22,6 +22,8 @@ services:
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       # API key for kindly-web-search MCP server
       - SERPER_API_KEY=${SERPER_API_KEY:-}
+      # API key for z.ai coding-helper
+      - Z_AI_API_KEY=${Z_AI_API_KEY:-}
 
     # Resource limits
     deploy:

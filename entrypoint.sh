@@ -26,7 +26,15 @@ if ! command -v uv >/dev/null 2>&1; then
     echo "==> uv installed"
 fi
 
-# 4. Install kindly-web-search MCP if SERPER_API_KEY is provided
+# 4. Configure z.ai coding-helper if Z_AI_API_KEY is provided
+if [ -n "$Z_AI_API_KEY" ] && command -v coding-helper >/dev/null 2>&1; then
+    echo "==> Configuring z.ai coding-helper..."
+    coding-helper auth glm_coding_plan_global "$Z_AI_API_KEY" && \
+    echo "==> z.ai coding-helper configured" || \
+    echo "==> z.ai coding-helper configuration skipped"
+fi
+
+# 5. Install kindly-web-search MCP if SERPER_API_KEY is provided
 if [ -n "$SERPER_API_KEY" ]; then
     # Wait for Claude CLI to be available
     for i in $(seq 1 30); do
@@ -48,7 +56,7 @@ if [ -n "$SERPER_API_KEY" ]; then
     done
 fi
 
-# 5. Run startup scripts from persistent storage
+# 6. Run startup scripts from persistent storage
 if [ -d /workspace/context/scripts/startup ]; then
     echo "==> Running startup scripts..."
     for script in /workspace/context/scripts/startup/*.sh; do
@@ -59,7 +67,7 @@ if [ -d /workspace/context/scripts/startup ]; then
     done
 fi
 
-# 6. Start chromium cleanup script if it exists
+# 7. Start chromium cleanup script if it exists
 if [ -f /usr/local/bin/clean-chromium.sh ]; then
     nohup /usr/local/bin/clean-chromium.sh >> /var/log/chromium-clean.log 2>&1 &
     echo "==> Chromium cleanup script started"

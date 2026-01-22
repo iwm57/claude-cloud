@@ -5,7 +5,7 @@ A lightweight, containerized development environment optimized for Coolify deplo
 **Features:**
 - **Lightweight:** Alpine Linux base (~150 MB without SSH)
 - **Resource-constrained:** 1GB RAM, 3GB disk space per container
-- **Pre-installed:** Claude CLI, Node.js, Python, Git, vim, nano
+- **Pre-installed:** Claude CLI, z.ai coding-helper, Node.js, Python, Git, vim, nano
 - **Self-healing:** Automatic setup of tools and scripts on container start
 - **Persistent storage:** Claude session data and context preserved across redeployments
 - **Access via:** Coolify web terminal or docker exec
@@ -47,6 +47,7 @@ In Coolify UI, set these environment variables:
 |----------|----------|-------------|
 | `GITHUB_TOKEN` | No | Personal access token for gh CLI authentication |
 | `SERPER_API_KEY` | No | API key for kindly-web-search MCP server |
+| `Z_AI_API_KEY` | No | API key for z.ai coding-helper (auto-configures Global plan) |
 
 ### 3. Configure Volume Mounts
 
@@ -77,8 +78,9 @@ The container automatically sets up tools and runs your custom scripts on every 
 
 1. **gh CLI** - Installed and authenticated if `GITHUB_TOKEN` is provided
 2. **uv** - Python package installer, always available
-3. **kindly-web-search MCP** - Auto-configured if `SERPER_API_KEY` is provided
-4. **Startup scripts** - Any `.sh` files in `/workspace/context/scripts/startup/` are executed automatically
+3. **z.ai coding-helper** - Auto-configured with Global plan if `Z_AI_API_KEY` is provided
+4. **kindly-web-search MCP** - Auto-configured if `SERPER_API_KEY` is provided
+5. **Startup scripts** - Any `.sh` files in `/workspace/context/scripts/startup/` are executed automatically
 
 ### Using Startup Scripts
 
@@ -96,6 +98,57 @@ chmod +x /workspace/context/scripts/startup/chromium-cleanup.sh
 
 **Example scripts are provided in `examples/startup-scripts/`:**
 - `chromium-cleanup.sh` - Auto-kill orphaned Chromium processes
+
+---
+
+## z.ai Coding Helper
+
+[z.ai](https://z.ai) coding-helper is pre-installed and auto-configured when you provide `Z_AI_API_KEY`.
+
+### Setup via Environment Variable
+
+Set `Z_AI_API_KEY` in Coolify or `.env` file - the Global plan is automatically configured on container start.
+
+### Manual Configuration
+
+If you prefer to configure interactively or change plans:
+
+```bash
+# Run initialization wizard
+coding-helper init
+
+# Configure interactively
+coding-helper auth
+
+# Set specific plan
+coding-helper auth glm_coding_plan_global <token>
+
+# Show current language
+coding-helper lang show
+
+# Change language
+coding-helper lang set en_US
+
+# Check system status
+coding-helper doctor
+
+# Reload plan into Claude Code
+coding-helper auth reload claude
+```
+
+### Available Commands
+
+| Command | Purpose |
+|---------|---------|
+| `coding-helper init` | Launch initialization wizard |
+| `coding-helper auth` | Configure API key interactively |
+| `coding-helper auth glm_coding_plan_global <token>` | Set Global plan key directly |
+| `coding-helper auth revoke` | Remove stored key |
+| `coding-helper auth reload claude` | Reload plan into Claude Code |
+| `coding-helper lang show` | Show current language |
+| `coding-helper lang set <lang>` | Set language (e.g., `en_US`) |
+| `coding-helper doctor` | Check system configuration |
+| `coding-helper --help` | Show help |
 
 ---
 
@@ -148,6 +201,8 @@ When your project is complete:
 
 | Tool | Purpose |
 |------|---------|
+| Claude CLI | AI coding assistant |
+| z.ai coding-helper | AI coding enhancement (auto-configured if Z_AI_API_KEY set) |
 | Node.js | JavaScript runtime |
 | npm | Node.js package manager |
 | Python 3.x | Python runtime |
@@ -155,7 +210,6 @@ When your project is complete:
 | uv | Fast Python package installer (auto-installed) |
 | Git | Version control |
 | gh CLI | GitHub CLI (auto-installed if GITHUB_TOKEN set) |
-| Claude CLI | AI coding assistant |
 | vim | Text editor |
 | nano | Simple text editor |
 | curl | HTTP client |
