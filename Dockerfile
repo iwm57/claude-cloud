@@ -21,6 +21,8 @@ RUN apk add --no-cache \
     py3-pip \
     # For building packages
     build-base \
+    # For kindly-web-search MCP get_content function
+    chromium \
     && rm -rf /var/cache/apk/*
 
 # Install Claude CLI globally
