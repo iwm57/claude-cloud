@@ -14,7 +14,7 @@ services:
     # Persistent volumes
     volumes:
       - claude-data:/root/.claude
-      - workspace-context:/workspace/context
+      - workspace:/workspace
 
     # Environment variables (use .env file for sensitive values)
     environment:
@@ -51,5 +51,5 @@ services:
 volumes:
   claude-data:
     driver: local
-  workspace-context:
+  workspace:
     driver: local

@@ -36,7 +36,7 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Declare volumes for persistent storage
-VOLUME ["/root/.claude", "/workspace/context"]
+VOLUME ["/root/.claude", "/workspace"]
 
 # Health check - container is healthy if Claude CLI is available
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
