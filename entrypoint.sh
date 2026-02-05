@@ -78,7 +78,22 @@ if [ -d /workspace/context/scripts/startup ]; then
     done
 fi
 
-# 7. Start chromium cleanup script if it exists
+# 7. Install Context7 MCP if CONTEXT7_API_KEY is provided
+if [ -n "$CONTEXT7_API_KEY" ]; then
+    for i in $(seq 1 30); do
+        if command -v claude >/dev/null 2>&1; then
+            echo "==> Installing Context7 MCP in /workspace..."
+            cd /workspace
+            claude mcp add context7 -- npx -y @upstash/context7-mcp --api-key "$CONTEXT7_API_KEY" && \
+            echo "==> Context7 MCP installed" || \
+            echo "==> Context7 MCP install may have failed"
+            break
+        fi
+        sleep 1
+    done
+fi
+
+# 8. Start chromium cleanup script if it exists
 if [ -f /usr/local/bin/clean-chromium.sh ]; then
     nohup /usr/local/bin/clean-chromium.sh >> /var/log/chromium-clean.log 2>&1 &
     echo "==> Chromium cleanup script started"
