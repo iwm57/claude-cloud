@@ -69,8 +69,8 @@ services:
       - FASTMCP_PORT=8000
       # Allow Docker network access by disabling DNS rebinding protection
       - MCP_DNS_REBINDING_PROTECTION=false
-      # Alternatively, explicitly allow these hosts (if protection is enabled):
-      # - MCP_ALLOWED_HOSTS=localhost:*,127.0.0.1:*,kindly-web-search:*
+      # Allow any Host header for Docker network communication
+      - ALLOWED_HOSTS=*
 
     ports:
       - "8000:8000"
