@@ -73,16 +73,21 @@ services:
     # Run with HTTP transport (use "http" not "streamable-http")
     command: ["--transport", "http", "--host", "0.0.0.0", "--port", "8000"]
 
-    # Health check
+    # Health check - use correct endpoint
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8000/"]
+      test: ["CMD", "sh", "-c", "wget -q --spider http://localhost:8000/mcp/ || wget -q --spider http://localhost:8000/mcp || exit 1"]
       interval: 30s
       timeout: 10s
-      start_period: 30s
-      retries: 3
+      start_period: 60s
+      retries: 5
 
     labels:
       - "com.coolify.description=Kindly Web Search MCP Server (HTTP transport)"
+
+# Shared network for inter-container communication
+networks:
+  default:
+    name: claude-cloud-network
 
 # Named volumes (auto-created by Docker)
 volumes:
