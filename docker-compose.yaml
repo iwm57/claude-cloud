@@ -70,8 +70,8 @@ services:
     ports:
       - "8000:8000"
 
-    # Run with HTTP transport (use "http" not "streamable-http")
-    command: ["--transport", "http", "--host", "0.0.0.0", "--port", "8000"]
+    # Run with streamable-http transport (--http is an alias for --streamable-http)
+    command: ["--http", "--host", "0.0.0.0", "--port", "8000"]
 
     # Health check - use correct endpoint
     healthcheck:
