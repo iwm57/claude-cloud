@@ -20,10 +20,12 @@ services:
     environment:
       # GitHub token for gh CLI authentication
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
-      # API key for kindly-web-search MCP server
+      # API key for kindly-web-search MCP server (passed to kindly service)
       - SERPER_API_KEY=${SERPER_API_KEY:-}
       # API key for z.ai coding-helper
       - Z_AI_API_KEY=${Z_AI_API_KEY:-}
+      # URL for kindly-web-search HTTP endpoint
+      - KINDLY_WEB_SEARCH_URL=http://kindly-web-search:8000/
 
     # Resource limits
     deploy:
@@ -46,6 +48,41 @@ services:
     labels:
       - "com.coolify.description=Claude Cloud Development Environment"
       - "com.coolify.type=development"
+
+    # Connect to kindly-web-search service
+    depends_on:
+      kindly-web-search:
+        condition: service_started
+
+  kindly-web-search:
+    build:
+      context: https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server.git
+      dockerfile: Dockerfile
+    image: kindly-web-search:latest
+    container_name: kindly-web-search
+    restart: unless-stopped
+
+    environment:
+      - SERPER_API_KEY=${SERPER_API_KEY:-}
+      - FASTMCP_HOST=0.0.0.0
+      - FASTMCP_PORT=8000
+
+    ports:
+      - "8000:8000"
+
+    # Run with HTTP transport
+    command: ["--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000"]
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+    labels:
+      - "com.coolify.description=Kindly Web Search MCP Server (HTTP transport)"
 
 # Named volumes (auto-created by Docker)
 volumes:

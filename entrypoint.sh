@@ -48,18 +48,17 @@ fi
 
 # 5. Install kindly-web-search MCP if SERPER_API_KEY is provided
 if [ -n "$SERPER_API_KEY" ]; then
-    # Wait for Claude CLI to be available
-    for i in $(seq 1 30); do
+    # Wait for Claude CLI to be available AND kindly-web-search HTTP service
+    for i in $(seq 1 60); do
         if command -v claude >/dev/null 2>&1; then
             echo "==> Installing kindly-web-search MCP in /workspace..."
             cd /workspace
+            # Use HTTP transport to connect to kindly-web-search container
+            # This bypasses pymupdf musl compatibility issues on Alpine
             claude mcp add kindly-web-search \
-                --transport stdio \
-                --env SERPER_API_KEY="$SERPER_API_KEY" \
-                -- \
-                uvx --from git+https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server \
-                kindly-web-search-mcp-server start-mcp-server && \
-            echo "==> kindly-web-search MCP installed" || \
+                --transport http \
+                "${KINDLY_WEB_SEARCH_URL:-http://kindly-web-search:8000/}" && \
+            echo "==> kindly-web-search MCP installed (HTTP transport)" || \
             echo "==> MCP install may have failed"
             break
         fi
