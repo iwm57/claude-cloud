@@ -57,7 +57,7 @@ if [ -n "$SERPER_API_KEY" ]; then
             # This bypasses pymupdf musl compatibility issues on Alpine
             claude mcp add kindly-web-search \
                 --transport http \
-                "${KINDLY_WEB_SEARCH_URL:-http://kindly-web-search:8000/}" && \
+                "${KINDLY_WEB_SEARCH_URL:-http://kindly-web-search:8000/mcp/}" && \
             echo "==> kindly-web-search MCP installed (HTTP transport)" || \
             echo "==> MCP install may have failed"
             break

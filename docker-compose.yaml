@@ -24,8 +24,8 @@ services:
       - SERPER_API_KEY=${SERPER_API_KEY:-}
       # API key for z.ai coding-helper
       - Z_AI_API_KEY=${Z_AI_API_KEY:-}
-      # URL for kindly-web-search HTTP endpoint
-      - KINDLY_WEB_SEARCH_URL=http://kindly-web-search:8000/
+      # URL for kindly-web-search HTTP endpoint (FastMCP default path is /mcp/)
+      - KINDLY_WEB_SEARCH_URL=http://kindly-web-search:8000/mcp/
 
     # Resource limits
     deploy:
