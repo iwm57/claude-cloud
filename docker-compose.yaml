@@ -25,8 +25,8 @@ services:
       # API key for z.ai coding-helper
       - Z_AI_API_KEY=${Z_AI_API_KEY:-}
       # URL for kindly-web-search HTTP endpoint (FastMCP default path is /mcp/)
-      # Use Coolify's public URL to avoid Host header validation issues
-      - KINDLY_WEB_SEARCH_URL=${SERVICE_URL_KINDLY_WEB_SEARCH:-http://kindly-web-search:8000/mcp/}
+      # Use internal Docker network URL (services are on same network)
+      - KINDLY_WEB_SEARCH_URL=http://kindly-web-search:8000/mcp/
 
     # Resource limits
     deploy:
