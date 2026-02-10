@@ -53,10 +53,20 @@ if [ -n "$SERPER_API_KEY" ]; then
         if command -v claude >/dev/null 2>&1; then
             echo "==> Installing kindly-web-search MCP (stdio transport via uvx)..."
             cd /workspace
-            # Use stdio transport with uvx - runs directly as subprocess
-            claude mcp add kindly-web-search -- \
-                uvx --from git+https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server \
-                kindly-web-search-mcp-server start-mcp-server && \
+            # Use add-json to properly set environment variables
+            claude mcp add-json kindly-web-search '{
+              "type": "stdio",
+              "command": "uvx",
+              "args": [
+                "--from",
+                "git+https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server",
+                "kindly-web-search-mcp-server",
+                "start-mcp-server"
+              ],
+              "env": {
+                "SERPER_API_KEY": "'"$SERPER_API_KEY"'"
+              }
+            }' && \
             echo "==> kindly-web-search MCP installed (stdio transport)" || \
             echo "==> MCP install may have failed"
             break
