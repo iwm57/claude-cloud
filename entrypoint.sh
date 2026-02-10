@@ -1,5 +1,5 @@
-#!/bin/sh
-# Self-healing entrypoint for claude-cloud container
+#!/bin/bash
+# Self-healing entrypoint for claude-cloud container (Debian version)
 set -e
 
 echo "==> Claude Cloud Container Initializing..."
@@ -12,7 +12,7 @@ echo "==> Persistent directories ready"
 # 2. Install gh CLI if GITHUB_TOKEN is provided
 if [ -n "$GITHUB_TOKEN" ] && ! command -v gh >/dev/null 2>&1; then
     echo "==> Installing gh CLI..."
-    apk add --no-cache github-cli
+    apt-get update && apt-get install -y --no-install-recommends gh && rm -rf /var/lib/apt/lists/*
     echo "$GITHUB_TOKEN" | gh auth login --with-token
     echo "==> gh CLI installed and authenticated"
 fi
@@ -33,7 +33,7 @@ if [ -n "$Z_AI_API_KEY" ] && command -v coding-helper >/dev/null 2>&1; then
     coding-helper auth reload claude && \
     echo "==> z.ai coding-helper configured" || \
     echo "==> z.ai coding-helper configuration skipped"
-
+    
     # Also configure Claude settings.json for z.ai endpoint
     echo "==> Updating Claude settings for z.ai..."
     SETTINGS_FILE="/root/.claude/settings.json"
@@ -72,7 +72,7 @@ if [ -d /workspace/context/scripts/startup ]; then
     for script in /workspace/context/scripts/startup/*.sh; do
         if [ -f "$script" ]; then
             echo "  -> Running $(basename "$script")"
-            sh "$script"
+            bash "$script"
         fi
     done
 fi
