@@ -20,13 +20,10 @@ services:
     environment:
       # GitHub token for gh CLI authentication
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
-      # API key for kindly-web-search MCP server (passed to kindly service)
+      # API key for kindly-web-search MCP server (for stdio transport via uvx)
       - SERPER_API_KEY=${SERPER_API_KEY:-}
       # API key for z.ai coding-helper
       - Z_AI_API_KEY=${Z_AI_API_KEY:-}
-      # URL for kindly-web-search HTTP endpoint (FastMCP default path is /mcp/)
-      # Use internal Docker network URL (services are on same network)
-      - KINDLY_WEB_SEARCH_URL=http://kindly-web-search:8000/mcp/
 
     # Resource limits
     deploy:
@@ -49,45 +46,6 @@ services:
     labels:
       - "com.coolify.description=Claude Cloud Development Environment"
       - "com.coolify.type=development"
-
-    # Connect to kindly-web-search service
-    depends_on:
-      kindly-web-search:
-        condition: service_started
-
-  kindly-web-search:
-    build:
-      context: https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server.git
-      dockerfile: Dockerfile
-    image: kindly-web-search:latest
-    container_name: kindly-web-search
-    restart: unless-stopped
-
-    environment:
-      - SERPER_API_KEY=${SERPER_API_KEY:-}
-      - FASTMCP_HOST=0.0.0.0
-      - FASTMCP_PORT=8000
-      # Allow Docker network access by disabling DNS rebinding protection
-      - MCP_DNS_REBINDING_PROTECTION=false
-      # Allow any Host header for Docker network communication
-      - ALLOWED_HOSTS=*
-
-    ports:
-      - "8000:8000"
-
-    # Run with streamable-http transport (--http is an alias for --streamable-http)
-    command: ["--http", "--host", "0.0.0.0", "--port", "8000"]
-
-    # Health check - use correct endpoint
-    healthcheck:
-      test: ["CMD", "sh", "-c", "wget -q --spider http://localhost:8000/mcp/ || wget -q --spider http://localhost:8000/mcp || exit 1"]
-      interval: 30s
-      timeout: 10s
-      start_period: 60s
-      retries: 5
-
-    labels:
-      - "com.coolify.description=Kindly Web Search MCP Server (HTTP transport)"
 
 # Shared network for inter-container communication
 networks:

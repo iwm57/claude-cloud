@@ -29,6 +29,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Claude CLI globally
 RUN npm install -g @anthropic-ai/claude-code
 
+# Install uvx (Python package runner) for MCP stdio servers
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    mv /root/.cargo/bin/uvx /usr/local/bin/uvx || \
+    ln -sf /root/.cargo/bin/uvx /usr/local/bin/uvx
+
 # Install z.ai coding helper
 RUN npm install -g @z_ai/coding-helper
 
