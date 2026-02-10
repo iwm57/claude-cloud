@@ -1,12 +1,15 @@
-# Lightweight base for cloud development environment
-# Optimized for Coolify deployment with resource constraints
-FROM alpine:3.19
+# Cloud development environment with Python 3.13
+# Debian-based for better package compatibility
+FROM python:3.13-slim
 
 # Set working directory for projects
 WORKDIR /workspace
 
+# Avoid prompts from apt
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     vim \
@@ -16,14 +19,12 @@ RUN apk add --no-cache \
     # Node.js runtime and package manager
     nodejs \
     npm \
-    # Python runtime and package manager
-    python3 \
-    py3-pip \
     # For building packages
-    build-base \
+    build-essential \
     # For kindly-web-search MCP get_content function
     chromium \
-    && rm -rf /var/cache/apk/*
+    # Clean up
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Claude CLI globally
 RUN npm install -g @anthropic-ai/claude-code
